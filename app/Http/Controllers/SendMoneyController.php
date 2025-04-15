@@ -75,9 +75,7 @@ class SendMoneyController extends Controller
                 'ResponseCode'=>'400'
             ], 400);
         }
-
         Log::info("Currency is valid: " . $currency->code);
-
         Log::info("wallet id is " . $walletId);
         $walletInfo=UserWallet::find($walletId);
         $charge = $this->chargeService->getCharge($request->Channel,$request->Amount,false);

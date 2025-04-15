@@ -1,0 +1,13 @@
+<VirtualHost *:80>
+    ServerName api.propel.co.ke
+    ServerAlias www.api.propel.co.ke
+    ServerAdmin technical@propel.co.ke
+    DocumentRoot /var/www/api.propel.co.ke/public
+    ErrorLog ${APACHE_LOG_DIR}/error.log
+    CustomLog ${APACHE_LOG_DIR}/access.log combined
+    <Directory /var/www/api.propel.co.ke/public>
+        Options -Indexes +FollowSymLinks
+        AllowOverride All
+        Require all granted
+    </Directory>
+</VirtualHost>

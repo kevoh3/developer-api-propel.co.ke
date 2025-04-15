@@ -16,7 +16,6 @@ Route::middleware([AuthenticateToken::class])->group(function () {
     Route::post('/v1/send-money/send-to-bank', [SendMoneyController::class, 'storeSendToBankRequest']);
     Route::post('/v1/payment/b2b', [SendMoneyController::class, 'storePaymentRequest']);
     Route::post('/v1/collection/initiate', [SendMoneyController::class, 'storeCollectionRequestFromMobile']);
-
 });
 require base_path('routes/sandbox.php');
 Route::fallback(function (Request $request) {

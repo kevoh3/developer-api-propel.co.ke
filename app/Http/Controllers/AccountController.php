@@ -22,7 +22,7 @@ class AccountController extends Controller
 public function getBalance(Request $request)
 {
     $data = $request->get('data');
-    $accountNumber = $request->input('AccountNumber');
+    $accountNumber = $request->input('MerchantCode');
     if (!DeveloperAuthService::validateAccountNumber($data, $accountNumber)) {
         return response()->json([
             'status' => false,

@@ -1,7 +1,7 @@
 <VirtualHost *:80>
     ServerName api.propel.co.ke
     ServerAlias www.api.propel.co.ke
-    ServerAdmin technical@propel.co.ke
+    ServerAdmin technical@propel.co.kephp
     DocumentRoot /var/www/api.propel.co.ke/public
     ErrorLog ${APACHE_LOG_DIR}/error.log
     CustomLog ${APACHE_LOG_DIR}/access.log combined
@@ -11,3 +11,19 @@
         Require all granted
     </Directory>
 </VirtualHost>
+
+INSERT INTO wallet_operators (
+    wallet_id, user_id, role, status, can_send, can_approve, can_manage_operators, created_at, updated_at
+) VALUES
+(147, 91, 'admin', 1, 1, 1, 1, NOW(), NOW()),
+(148, 92, 'admin', 1, 1, 1, 1, NOW(), NOW()),
+(149, 93, 'admin', 1, 1, 1, 1, NOW(), NOW()),
+(150, 94, 'admin', 1, 1, 1, 1, NOW(), NOW()),
+(151, 96, 'admin', 1, 1, 1, 1, NOW(), NOW()),
+(152, 97, 'admin', 1, 1, 1, 1, NOW(), NOW()),
+(153, 98, 'admin', 1, 1, 1, 1, NOW(), NOW()),
+(154, 100, 'admin', 1, 1, 1, 1, NOW(), NOW()),
+(155, 101, 'admin', 1, 1, 1, 1, NOW(), NOW()),
+(156, 102, 'admin', 1, 1, 1, 1, NOW(), NOW()),
+(157, 103, 'admin', 1, 1, 1, 1, NOW(), NOW()),
+(158, 104, 'admin', 1, 1, 1, 1, NOW(), NOW());

@@ -6,17 +6,19 @@ use App\Http\Controllers\SendMoneyController;
 use App\Http\Middleware\AuthenticateToken;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
-
-Route::get('/v1/auth/token', [AccessTokenController::class, 'getToken']);
-Route::post('/v1/auth/refresh-token', [AccessTokenController::class, 'refreshToken']);
-Route::middleware([AuthenticateToken::class])->group(function () {
-    Route::get('/v1/accounts/balance', [AccountController::class, 'getBalance']);
-    Route::get('/v1/accounts/transactions', [AccountController::class, 'getTransactions']);
-    Route::post('/v1/send-money/send-to-mobile', [SendMoneyController::class, 'storeSendToMobileMoneyRequest']);
-    Route::post('/v1/send-money/send-to-bank', [SendMoneyController::class, 'storeSendToBankRequest']);
-    Route::post('/v1/payment/b2b', [SendMoneyController::class, 'storePaymentRequest']);
-    Route::post('/v1/collection/initiate', [SendMoneyController::class, 'storeCollectionRequestFromMobile']);
+Route::prefix('prod/v1')->group(function () {
+    Route::get('/auth/token', [AccessTokenController::class, 'getToken']);
+    Route::post('/auth/refresh-token', [AccessTokenController::class, 'refreshToken']);
+    Route::middleware([AuthenticateToken::class])->group(function () {
+        Route::get('/accounts/balance', [AccountController::class, 'getBalance']);
+        Route::get('/accounts/transactions', [AccountController::class, 'getTransactions']);
+        Route::post('/send-money/send-to-mobile', [SendMoneyController::class, 'storeSendToMobileMoneyRequest']);
+        Route::post('/send-money/send-to-bank', [SendMoneyController::class, 'storeSendToBankRequest']);
+        Route::post('/payment/b2b', [SendMoneyController::class, 'storePaymentRequest']);
+        Route::post('/collection/initiate', [SendMoneyController::class, 'storeCollectionRequestFromMobile']);
+    });
 });
+
 require base_path('routes/sandbox.php');
 Route::fallback(function (Request $request) {
     return response()->json([

@@ -27,6 +27,7 @@ class GlobalConst {
 
     const PERSONAL = "PERSONAL";
     const BUSINESS = "BUSINESS";
+    const API = "API";
 
     const TRANSFER  = "transfer";
     const REQUEST  = "request";

@@ -14,7 +14,6 @@ class PaymentRequest extends Model
     public $timestamps = false; // Disable Laravel's timestamps since the table manages them
 
     protected $primaryKey = 'id';
-
     protected $fillable = [
         'payment_gateway',
         'merchant_code',
@@ -85,7 +84,13 @@ class PaymentRequest extends Model
         'redirect_url',
         'success_url',
         'failure_url',
-        'date_created'
+        'date_created',
+        'MerchantRequestID',
+      'TransactionReference',
+      'CheckoutRequestID',
+      'CustomerMessage',
+       'reqStatus'
+
     ];
 
     protected $casts = [

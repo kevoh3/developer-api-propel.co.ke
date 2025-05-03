@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Constants\GlobalConst;
 use App\Jobs\PaymentCollectionProcessor;
 use App\Jobs\PaymentProcessor;
 use App\Models\Currency;
@@ -80,6 +81,7 @@ class SendMoneyController extends Controller
         $walletInfo=UserWallet::find($walletId);
         $charge = $this->chargeService->getCharge($request->Channel,$request->Amount,false);
         $channel_name = $this->walletService->getChannelName($request->Channel);
+        $destination_account_name=$channel_name.'-' .$request->ReceiverNumber;
         if (!$channel_name) {
             return response()->json([
                 "status" => false,
@@ -101,8 +103,20 @@ class SendMoneyController extends Controller
             }
 
             // Check if a wallet with the given ReceiverNumber exists
-            $walletExists = UserWallet::where('wallet_account', $request->ReceiverNumber)->exists();
-            if (!$walletExists) {
+            //$walletExists = UserWallet::where('wallet_account', $request->ReceiverNumber)->exists();
+            $destination_account_name = UserWallet::where('wallet_account', $request->ReceiverNumber)
+                ->pluck('wallet_name')
+                ->first();
+
+//            if (!$walletExists) {
+//                return response()->json([
+//                    "status" => false,
+//                    "message" => "Wallet not found",
+//                    "detail" => "No wallet found with the provided ReceiverNumber.",
+//                    "ResponseCode" => "404"
+//                ], 404);
+//            }
+            if (empty($destination_account_name)) {
                 return response()->json([
                     "status" => false,
                     "message" => "Wallet not found",
@@ -110,6 +124,7 @@ class SendMoneyController extends Controller
                     "ResponseCode" => "404"
                 ], 404);
             }
+
         }
         try {
            $amount_to_dect=$charge+$request->Amount;
@@ -158,6 +173,7 @@ class SendMoneyController extends Controller
                 'destination_channel_code' => $destination_channel_code,
                 'account_number' => $receiverNumber,
                 'destination_account_number' => $receiverNumber,
+                'destination_account_name' => $destination_account_name,
                 'currency' => 'KES',
                 'amount' => $request->Amount,
                 'transaction_ref' => $transactionReference,
@@ -174,12 +190,16 @@ class SendMoneyController extends Controller
                 'total_amount'=>$amount_to_dect,
                 'remittance_purpose'=>$request->Reason,
                 'conversion_rate'=>1,
-                'propel_transaction_charge'=>$charge
+                'propel_transaction_charge'=>$charge,
+                'status'=>'initiated',
+                'initiated_at'=>now(),
+                'user_type'=>GlobalConst::API
 
             ]);
             DB::commit(); // Commit transaction after successful insert
             Log::info("Dispatching PaymentProcessor for PaymentRequest ID: " . $paymentRequest->id);
-            PaymentProcessor::dispatch($paymentRequest);
+            //PaymentProcessor::dispatch($paymentRequest);
+            PaymentProcessor::dispatch($paymentRequest)->onQueue('initiatePayment');
             return response()->json([
                 "status" => true,
                 "detail" => "Transaction is being processed",
@@ -548,7 +568,7 @@ class SendMoneyController extends Controller
             "PhoneNumber" => "required|string",
             "Channel" => ["required", "string", Rule::in($mobileMoneyChannels)],
             "Reason" => "required|string",
-            "InitiatorTransactionReference" => "required|string",
+            "InitiatorTransactionReference" => "required",
             "CallBackUrl" => "required|url",
         ]);
         if ($validator->fails()) {
@@ -667,10 +687,11 @@ class SendMoneyController extends Controller
                 'remittance_purpose'=>$request->Reason,
                 'conversion_rate'=>1,
                 'propel_transaction_charge'=>$charge,
+                'status'=>'initiated'
 
             ]);
             DB::commit(); // Commit transaction after successful insert
-            $invoiceNumber='PC'.$paymentRequest->id;
+            $invoiceNumber='RM'.$paymentRequest->id;
             $baseUrl =env('PROPEL_CHECKOUT_PAGE_URL');
             $params = [
                 'MerchantCode' => $request->MerchantCode,
@@ -686,7 +707,7 @@ class SendMoneyController extends Controller
             $paymentLink= $baseUrl . '?data=' . urlencode($encodedQueryString);
             $paymentRequest->update(['payment_url' => 'processing']);
             Log::info("Dispatching PaymentProcessor for PaymentRequest ID: " . $paymentRequest->id);
-            PaymentCollectionProcessor::dispatch($paymentRequest);
+            PaymentCollectionProcessor::dispatch($paymentRequest)->onQueue('initiateCollection');
             if($request->Channel=='Propel'){
                 return response()->json([
                     "status" => true,

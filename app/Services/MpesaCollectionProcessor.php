@@ -11,11 +11,11 @@ use Illuminate\Support\Facades\Log;
 
 class MpesaCollectionProcessor
 {
-    public function process(PaymentRequest $payment, TransactionStage $transactionStaging)
+    public function process(PaymentRequest $payment)
     {
         try {
             Log::info("Starting Mpesa collection process for PaymentRequest ID: {$payment->id}");
-            return $this->sendToSmartSwithInvoiceSwitch($payment->destination_channel_code, $payment->amount, $payment->account_number, $transactionStaging->id, $payment->merchant_code);
+            return $this->sendToSmartSwithInvoiceSwitch($payment->destination_channel_code, $payment->amount, $payment->account_number, $payment->id, $payment->merchant_code);
 
         } catch (\Exception $e) {
             Log::error("MpesaProcessor failed: " . $e->getMessage());
@@ -24,7 +24,7 @@ class MpesaCollectionProcessor
     }
     private function sendToSmartSwithInvoiceSwitch($NetworkCode, $Amount, $PhoneNumber, $AccountReference, $transactionReference)
     {
-        $sendingRef = 'ref-' . $AccountReference;
+        $sendingRef = 'RM-' . $AccountReference;
         $CallBackURL =env('COLLECTION_CALLBACK_URL');
         if ($NetworkCode == '63902') {
               $posturl = env('SM_BASE_URL').'/sm-mp-generate-invoice';
@@ -45,7 +45,7 @@ class MpesaCollectionProcessor
             'AccountReference' => $sendingRef,
             'TransactionReference' => $transactionReference,
         ]);
-        $paymentRequest = TransactionStage::find($AccountReference);
+        $paymentRequest = PaymentRequest::find($AccountReference);
         if ($response->successful()) {
             $data = $response->json();
             $majibu = [

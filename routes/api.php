@@ -4,8 +4,10 @@ use App\Http\Controllers\AccessTokenController;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\SendMoneyController;
 use App\Http\Middleware\AuthenticateToken;
+use App\Http\Middleware\AuthenticateApiKey;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
+use App\Http\Controllers\WalletAsAServiceController;
 Route::prefix('prod/v1')->group(function () {
     Route::get('/auth/token', [AccessTokenController::class, 'getToken']);
     Route::post('/auth/refresh-token', [AccessTokenController::class, 'refreshToken']);
@@ -17,6 +19,11 @@ Route::prefix('prod/v1')->group(function () {
         Route::post('/payment/b2b', [SendMoneyController::class, 'storePaymentRequest']);
         Route::post('/collection/initiate', [SendMoneyController::class, 'storeCollectionRequestFromMobile']);
     });
+    // API Key protected route
+    Route::middleware([AuthenticateApiKey::class])->group(function () {
+        Route::post('/add-beneficiary-wallet', [WalletAsAServiceController::class, 'addBeneficiary']);
+    });
+
 });
 
 require base_path('routes/sandbox.php');

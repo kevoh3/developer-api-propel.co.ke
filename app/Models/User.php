@@ -9,6 +9,8 @@ use Illuminate\Notifications\Notifiable;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class User extends Authenticatable
 {
@@ -99,7 +101,7 @@ class User extends Authenticatable
 
     public function kyc()
     {
-        return $this->hasOne(UserKycData::class);
+        return null;//$this->hasOne(UserKycData::class);
     }
 
     public function getFullnameAttribute()
@@ -115,15 +117,16 @@ class User extends Authenticatable
         return "web";
     }
     public function getUserImageAttribute() {
-        $image = $this->image;
-
-        if($image == null) {
-            return files_asset_path('profile-default');
-        }else if(filter_var($image, FILTER_VALIDATE_URL)) {
-            return $image;
-        }else {
-            return files_asset_path("user-profile") . "/" . $image;
-        }
+        return null;
+//        $image = $this->image;
+//
+//        if($image == null) {
+//            return files_asset_path('profile-default');
+//        }else if(filter_var($image, FILTER_VALIDATE_URL)) {
+//            return $image;
+//        }else {
+//            return files_asset_path("user-profile") . "/" . $image;
+//        }
     }
 
 //    public function passwordResets() {
@@ -185,13 +188,13 @@ class User extends Authenticatable
     }
 
     public function loginLogs(){
-        return $this->hasMany(UserLoginLog::class);
+        return null;//$this->hasMany(UserLoginLog::class);
     }
 
     public function getLastLoginAttribute() {
-        if($this->loginLogs()->count() > 0) {
-            return $this->loginLogs()->get()->last()->created_at->format("H:i A, d M Y");
-        }
+//        if($this->loginLogs()->count() > 0) {
+//            return $this->loginLogs()->get()->last()->created_at->format("H:i A, d M Y");
+//        }
 
         return "N/A";
     }
@@ -208,8 +211,68 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Sacco::class, 'sacco_user')->withTimestamps();
     }
+//
+//    public static function AddWallet($user_id,$notification_number,$wallet_name)
+//    {
+//        $last_wallet = WalletAccountController::orderBy('wallet_account', 'desc')->first();
+//        $wallet_account = $last_wallet ? (int)$last_wallet->wallet_account + 1 : 5001;
+//        WalletAccountController::create(['wallet_account'=>$wallet_account]);
+//        $wallet_id = UserWallet::insertGetId([
+//            'user_id'            => $user_id,
+//            'currency_id'         => 10,
+//            'balance'             => 0,
+//            'status'              => true,
+//            'created_at'          => now(),
+//            'wallet_account'      => $wallet_account,
+//            'notification_number' => $notification_number,
+//            'wallet_name'         => $wallet_name,
+//            'account_type'        => 'WAAS',
+//        ]);
+//        //return $wallet_id; // Return the newly created wallet ID
+//        return UserWallet::find($wallet_id);
+//    }
+    public static function AddWallet($user_id, $notification_number, $wallet_name, $currency_id = 10)
+    {
+        try {
+            return DB::transaction(function () use ($user_id, $notification_number, $wallet_name, $currency_id) {
 
+                // Step 1: Generate unique wallet account number
+                $last_wallet = WalletAccountController::orderBy('wallet_account', 'desc')->first();
+                $wallet_account = $last_wallet ? ((int) $last_wallet->wallet_account + 1) : 5001;
 
+                // Step 2: Log wallet number in tracking table
+                WalletAccountController::create([
+                    'wallet_account' => $wallet_account,
+                ]);
+                // Step 3: Insert into user wallets
+                $wallet_id = UserWallet::insertGetId([
+                    'user_id'             => $user_id,
+                    'currency_id'         => $currency_id,
+                    'balance'             => 0,
+                    'status'              => true,
+                    'created_at'          => now(),
+                    'wallet_account'      => $wallet_account,
+                    'notification_number' => $notification_number,
+                    'wallet_name'         => $wallet_name,
+                    'account_type'        => 'WAAS',
+                ]);
+
+                // Step 4: Optional - fire event, log activity, etc.
+                // event(new WalletCreated($wallet_id));
+                // Step 5: Return full wallet with relationships
+                return UserWallet::with(['currency'])->find($wallet_id);
+            });
+        } catch (\Exception $e) {
+            Log::error("Failed to add wallet for user_id: $user_id", [
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'message' => 'Failed to create wallet',
+                'error'   => $e->getMessage()
+            ], 500);
+        }
+    }
 
 
 }

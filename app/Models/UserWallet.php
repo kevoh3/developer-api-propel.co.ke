@@ -13,7 +13,7 @@ use App\Traits\Ownable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
-use Laravel\Passport\Client;
+use App\Models\Client;
 
 class UserWallet extends Model
 {

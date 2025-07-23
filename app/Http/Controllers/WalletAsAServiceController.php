@@ -17,7 +17,7 @@ class WalletAsAServiceController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'mobile_no' => 'required|string|max:20',
-            'request_id' => 'required|string|max:20',
+            'request_id' => 'required',
         ]);
         if ($validator->fails()) {
             return response()->json([
